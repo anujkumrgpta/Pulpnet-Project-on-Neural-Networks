@@ -1,0 +1,74 @@
+mport requests
+from bs4 import BeautifulSoup
+import re
+from pypdf import PdfReader
+import io # Import io
+
+def scrape_page(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    # Remove script/style
+    for tag in soup(['script', 'style']):
+        tag.decompose()
+    text = soup.get_text(separator='\n', strip=True)
+    # Clean up
+    text = re.sub(r'\n+', '\n', text)
+    return text
+
+#scraping every page of ICS website
+
+urls = [
+    'https://iitk.ac.in/ics/',
+    'https://www.iitk.ac.in/counsel/team.php',
+    'https://www.iitk.ac.in/counsel/events.php',
+    'https://www.iitk.ac.in/counsel/workshop-sessions.php',
+    'https://www.iitk.ac.in/counsel/samvad.php',
+    'https://www.iitk.ac.in/counsel/deaddiction.php',
+    'https://www.iitk.ac.in/counsel/appointment_self.php',
+    'https://www.iitk.ac.in/counsel/appointment_SST.php',
+    'https://www.iitk.ac.in/counsel/referral.php',
+    'https://www.iitk.ac.in/counsel/faq.php',
+    'https://www.iitk.ac.in/counsel/academic-support.php',
+    'https://www.iitk.ac.in/counsel/mental-health-support.php',
+    'https://www.iitk.ac.in/counsel/SBF.php',
+    'https://www.iitk.ac.in/counsel/new-ug-information.php',
+    'https://www.iitk.ac.in/counsel/new-pg-information.php',
+    'https://www.iitk.ac.in/counsel/ug-information.php',
+    'https://www.iitk.ac.in/counsel/pg-information.php',
+    'https://www.iitk.ac.in/counsel/psytool.php',
+    'https://www.iitk.ac.in/counsel/MHvideos.php',
+    'https://www.iitk.ac.in/counsel/blog.php',
+    'https://www.iitk.ac.in/counsel/emergency.php',
+    'https://www.iitk.ac.in/counsel/family_tree/index.html'
+]
+
+all_text = []
+print("Scrapping the website of ICS IITK")
+for url in urls:
+    page_text = scrape_page(url)
+    all_text.append(page_text)
+#saving the data
+with open("ics_data_final.txt", "w", encoding="utf-8") as f:
+    for text in all_text:
+        f.write(text + "\n")
+
+#scraping the Brochure of ICS IITK
+# Step 1: Get the PDF from URL
+url = "https://www.iitk.ac.in/counsel/old/resources/brochure.pdf"
+response = requests.get(url)
+
+# Step 2: Load PDF into memory
+pdf_file = io.BytesIO(response.content)
+
+# Step 3: Extract text using pypdf
+print("Scrapping the brochure of ICS IITK")
+reader = PdfReader(pdf_file)
+pdf_text = ""
+for page in reader.pages:
+    pdf_text += page.extract_text() + "\n"
+
+# Combine and save
+with open("ics_data_final.txt", "a", encoding="utf-8") as f:
+    f.write(pdf_text) # Changed from f.append(pdf_text)
+
+print("Everything saved as ics_data_final")
